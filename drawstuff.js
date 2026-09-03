@@ -504,25 +504,45 @@ function projectPoly(imagedata,poly,view) {
 
 /* main -- here is where execution begins after window load */
 
-function main() {
+// returns a fresh copy of the polygon (projectPoly mutates x,y in place,
+// so each view needs its own untouched copy of the original vertices)
+function makePoly() {
+    return [{x:-5,y:5,z:10,c:new Color(255,0,0,255)}, {x:5,y:5,z:10,c:new Color(0,255,0,255)}, 
+            {x:5,y:-5,z:10,c:new Color(0,0,0,255)}, {x:-5,y:-5,z:10,c:new Color(0,0,255,255)}];
+}
 
-    // Get the canvas, context, and image data
-    var canvas = document.getElementById("viewport"); 
+// renders one view (poly + camera params) into the named canvas element
+function renderView(canvasId, view) {
+    var canvas = document.getElementById(canvasId); 
     var context = canvas.getContext("2d");
     var w = context.canvas.width; // as set in html
     var h = context.canvas.height;  // as set in html
     var imagedata = context.createImageData(w,h);
-    
-    // define polygon and view
-    var testEye = new Vector(0,0,0);
-    var testAt = Vector.subtract(new Vector(0,0,10),testEye);
-    var view = {eye:testEye, at:testAt, up:new Vector(0,1,0)};
-    var poly = [{x:-5,y:5,z:10,c:new Color(255,0,0,255)}, {x:5,y:5,z:10,c:new Color(0,255,0,255)}, 
-                {x:5,y:-5,z:10,c:new Color(0,0,0,255)}, {x:-5,y:-5,z:10,c:new Color(0,0,255,255)}];
-    
-    // Define and render a rectangle in 2D with colors and coords at corners
+    var poly = makePoly();
+
     projectPoly(imagedata,poly,view);
     fillPoly(imagedata,poly);
-    
+
     context.putImageData(imagedata, 0, 0); // display the image in the context
+}
+
+function main() {
+
+    // ---- View 1: diamond, viewed straight-on ----
+    // eye placed behind the polygon (z=20, looking back toward z=10) which
+    // mirrors left/right; up vector rotated 45 degrees rolls the square
+    // into a diamond orientation
+    var eye1 = new Vector(0,0,20);
+    var at1 = Vector.subtract(new Vector(0,0,10), eye1);
+    var view1 = {eye:eye1, at:at1, up:new Vector(1,1,0)};
+    renderView("viewport1", view1);
+
+    // ---- View 2: perspective trapezoid ----
+    // eye offset up and to the left of the polygon's center axis (instead
+    // of centered), producing true perspective foreshortening; up vector
+    // unrotated (no roll)
+    var eye2 = new Vector(-5,5,0);
+    var at2 = Vector.subtract(new Vector(0,0,10), eye2);
+    var view2 = {eye:eye2, at:at2, up:new Vector(0,1,0)};
+    renderView("viewport2", view2);
 }
